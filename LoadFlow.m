@@ -1,26 +1,37 @@
 clear;clc;
-format short
+format long
+
+%Data
 DATA = csvread('datos.csv');
 Vb = 12.66; %kV
 Sb = 10; %MVA
 Zb = Vb^2/Sb; 
 Nb = length(DATA); %number of branches
 N = Nb + 1; %number of nodes
-st=zeros(1,1000);
-V = ones(1,N);
+st=zeros(1,1000); %Stack
+V = ones(1,N); %Abs(voltages) in nodes
+
+
 %R and X to pu
 for i=1:length(DATA)
     for j=4:5
         DATA(i,j) = DATA(i,j)/Zb;
     end
 end
+
 %P and Q to pu
 for i=1:length(DATA)
     for j=6:7
-        DATA(i,j) = DATA(i,j)*0.001/Sb;
+        DATA(i,j) = DATA(i,j)*0.001/Sb; %Data in kW and kVAr !!!
     end
 end
+
+
+DVMAX=100;
+tolerance = 0.0001;
 count=0;
+limit_count = 1e5;
+
 % Step 1: Initializate variables
 Vold = ones(1,N);
 Vnew = ones(1,N);
@@ -28,15 +39,11 @@ dif = zeros(1,N);
 I = zeros(1,Nb);
 
 
-% Computation of branches current
-DVMAX=100;
-tolerance = 0.0001;
 
-while(DVMAX>tolerance)
+% Computation of branches current
+while((DVMAX>tolerance && count<=limit_count))
 I = zeros(1,Nb);
 for j=Nb:-1:1
-%     disp('branch')
-%     disp(j)
     flag = 0;
     for i=1:Nb
         if(DATA(j,3) == DATA(i,2)) 
@@ -46,20 +53,15 @@ for j=Nb:-1:1
     end
    %If it is a branch with a leaf node
    if(flag==0)
-%        disp('leaf branch')
-%        disp(j)
        P = DATA(j,6);
        Q = DATA(j,7);
-       I(j)=(P-1i*Q)/conj(Vold(j));
-%        disp(I(j))
+       I(j)=(P-1i*Q)/conj(Vnew(j+1));
    else
        top=0;
-%        disp('vecinos')
        for i=2:Nb
           if(DATA(j,3)==DATA(i,2)) %Sending of i = Receiver of j
               top = top + 1;
               st(top) = DATA(i,1);
-%               disp(st(top))
           end
        end
        while(top>0)
@@ -69,11 +71,8 @@ for j=Nb:-1:1
        end
        P = DATA(j,6);
        Q = DATA(j,7);
-       I(j) = I(j)+(P-1i*Q)/conj(Vold(j));
-%        disp('current')
-%        disp(I(j))
+       I(j) = I(j)+(P-1i*Q)/conj(Vold(j+1));
    end
-%    disp('---------------------')
 end
 
 % Step 3:Compute new node voltages
@@ -88,7 +87,6 @@ for i=2:N
     for k=1:Nb
         if(DATA(k,3)==i)
             Vj = Vold(DATA(k,2));
-%             disp("Voltages : "+num2str(DATA(k,2))+ " - "+num2str(i))
             break;
         end
     end
@@ -100,7 +98,10 @@ end
 dif = abs(Vnew - Vold);
 V = abs(Vnew);
 DVMAX = max(dif);
-%DVMAX = tolerance;
+%DVMAX = tolerance; %activate for 1 iteration
 end
+
+%Print Results
+
 
 
