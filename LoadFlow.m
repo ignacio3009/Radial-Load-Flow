@@ -1,8 +1,8 @@
-clear;clc;
+%clear;clc;
 format long
 
 %Data
-DATA = csvread('datos.csv');
+DATA = csvread('data.csv',1);
 Vb = 12.66; %kV
 Sb = 10; %MVA
 Zb = Vb^2/Sb; 
@@ -102,6 +102,5 @@ DVMAX = max(dif);
 end
 
 %Print Results
-
-
-
+V
+I
