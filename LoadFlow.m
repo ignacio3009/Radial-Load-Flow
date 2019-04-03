@@ -30,9 +30,10 @@ I = zeros(1,Nb);
 
 % Computation of branches current
 DVMAX=100;
-tolerance = 0.01;
+tolerance = 0.0001;
 
 while(DVMAX>tolerance)
+I = zeros(1,Nb);
 for j=Nb:-1:1
 %     disp('branch')
 %     disp(j)
@@ -45,29 +46,30 @@ for j=Nb:-1:1
     end
    %If it is a branch with a leaf node
    if(flag==0)
-       %disp('leaf branch')
+%        disp('leaf branch')
+%        disp(j)
        P = DATA(j,6);
        Q = DATA(j,7);
-       I(DATA(j,1))=(P-1i*Q)/conj(Vold(j));
+       I(j)=(P-1i*Q)/conj(Vold(j));
 %        disp(I(j))
    else
        top=0;
 %        disp('vecinos')
        for i=2:Nb
           if(DATA(j,3)==DATA(i,2)) %Sending of i = Receiver of j
-              top=top+1;
+              top = top + 1;
               st(top) = DATA(i,1);
 %               disp(st(top))
           end
        end
        while(top>0)
           temp = st(top);
-          I(DATA(j,1)) = I(DATA(j,1))+I(temp);
+          I(j) = I(j)+I(temp);
           top = top-1;
        end
        P = DATA(j,6);
        Q = DATA(j,7);
-       I(DATA(j,1)) = I(DATA(j,1))+(P-1i*Q)/conj(Vold(j));
+       I(j) = I(j)+(P-1i*Q)/conj(Vold(j));
 %        disp('current')
 %        disp(I(j))
    end
@@ -97,6 +99,8 @@ end
 % Step 4: Compute diference
 dif = abs(Vnew - Vold);
 V = abs(Vnew);
-DVMAX = max(dif)
+DVMAX = max(dif);
 %DVMAX = tolerance;
 end
+
+
