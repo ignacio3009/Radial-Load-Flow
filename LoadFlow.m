@@ -1,4 +1,4 @@
-%clear;clc;
+clear;clc;
 format long
 
 %Data
